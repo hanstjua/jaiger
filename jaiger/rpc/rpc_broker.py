@@ -20,9 +20,9 @@ def broker_task(endpoint: str, start_event: Event, stop_event: Event):
     logger = getLogger('jaiger')
 
     while not stop_event.is_set():
-        if poller.poll(1):
-            data = socket.recv_multipart()
-            src, dst, content = data
+        sockets = dict(poller.poll(1))
+        if sockets[socket] == zmq.POLLIN:
+            src, dst, content = socket.recv_multipart()
             logger.debug(f'Routing [{src}] > [{dst}]: {content}')
             socket.send_multipart([dst, src, content])
 
@@ -39,13 +39,16 @@ class RpcBroker:
         self._timeout = config.timeout
 
         self._task: Optional[Process] = None
-        self._stop_event = Event()
+        self._stop_event: Optional[Event] = None
 
     def start(self):
+        logger = getLogger('jaiger')
         if self._task is not None:
+            logger.warning(f'Terminating existing broker process ({self._task.pid}) ...')
             self.stop()
 
         start_event = Event()
+        self._stop_event = Event()
         self._task = Process(target=broker_task,
                              args=(self._endpoint, start_event, self._stop_event),
                              daemon=True)
@@ -53,7 +56,7 @@ class RpcBroker:
 
         start_event.wait()
 
-        getLogger('jaiger').info(f'Broker process ({self._task.pid}) has started.')
+        logger.info(f'Broker process ({self._task.pid}) has started.')
 
     def stop(self):
         if self._task is not None:
@@ -68,3 +71,4 @@ class RpcBroker:
                 logger.info(f'Broker task ({self._task.pid}) has been terminated.')
 
             self._task = None
+            self._stop_event = None
