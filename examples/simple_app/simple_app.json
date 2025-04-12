@@ -1,0 +1,35 @@
+{
+    "settings": {
+        "server": {
+            "http": {
+                "address": "127.0.0.1",
+                "port": 8888
+            },
+            "rpc": {
+                "host": "127.0.0.1",
+                "port": 8889
+            }
+        }
+    },
+    "tools": [
+        {
+            "name": "python",
+            "type": "PythonTool",
+            "config": {
+                "version": "3.9"
+            }
+        },
+        {
+            "name": "file",
+            "type": "FileTool"
+        },
+        {
+            "name": "database",
+            "type": "http://127.0.0.1:8000/database",
+            "config": {
+                "engine": "sqlite",
+                "db_name": "my_db"
+            }
+        }
+    ]
+}

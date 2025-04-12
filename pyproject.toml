@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "your_package_name"
+version = "0.1.0"
+description = ""
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+    { name = "Johan Tjuatja", email = "hanstjua@yahoo.co.id" }
+]
+keywords = ["example", "template", "pyproject"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
+]
+dependencies = [
+    "requests>=2.25.1",
+    "pydantic>=1.10",
+    "pyzmq"
+]
+
+[project.urls]
+Homepage = "https://github.com/hanstjua/jaiger"
+Repository = "https://github.com/hanstjua/jaiger"
+Issues = "https://github.com/hanstjua/jaiger/issues"
+
+[tool.setuptools]
+packages = ["jaiger"]  # or use find directive
+
+[tool.setuptools.package-data]
+"your_package" = ["data/*.json"]  # example of including non-code files
+
