@@ -5,12 +5,12 @@ from pydantic import BaseModel
 class RpcConfig(BaseModel):
     host: str
     port: int
-    timeout: Optional[int] = 10
+    timeout: int = 10
 
 class HttpConfig(BaseModel):
     host: str
     port: int
-    timeout: Optional[int] = 10
+    timeout: int = 10
 
 class ServerConfig(BaseModel):
     http: Optional[HttpConfig] = None
