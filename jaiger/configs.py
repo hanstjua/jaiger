@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Literal, Optional
 from pydantic import BaseModel
 
 
@@ -24,6 +24,13 @@ class ToolConfig(BaseModel):
     type: str
     config: Optional[dict] = None
 
+class AiConfig(BaseModel):
+    name: str
+    model: str
+    type: Literal['openai', 'google', 'anthropic']
+    api_key: str
+
 class MainConfig(BaseModel):
     settings: Optional[Settings] = None
     tools: List[ToolConfig]
+    ais: List[AiConfig]

@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import zmq
 from jaiger.configs import RpcConfig
-from jaiger.rpc.models import RpcRequest, RpcResponse
+from jaiger.models import Call, CallResult
 
 
 def server_task(
@@ -67,7 +67,7 @@ def server_task(
             logger.debug(f"RPC Server [{id}] from [{src}]: {content}")
 
             try:
-                request = RpcRequest.model_validate(content)
+                request = Call.model_validate(content)
                 futures.append(
                     pool.submit(
                         callbacks[request.function], *request.args, **request.kwargs
@@ -77,15 +77,15 @@ def server_task(
             except Exception as e:
                 logger.info(
                     f"Server {id} failed to handle RPC request {request}:"
-                    f"{traceback.TracebackException.from_exception(e).format()}"
+                    f"{''.join(traceback.TracebackException.from_exception(e).format())}"
                 )
 
             completed, futures = separate_completed_futures(futures)
             for src, future in completed:
                 error = future.exception()
-                content = RpcResponse(
+                content = CallResult(
                     result=future.result() if error is None else None,
-                    error=traceback.TracebackException.from_exception(error).format()
+                    error=''.join(traceback.TracebackException.from_exception(error).format())
                     if error is not None
                     else "",
                 )

@@ -1,35 +1,20 @@
 {
-    "settings": {
-        "server": {
-            "http": {
-                "address": "127.0.0.1",
-                "port": 8888
-            },
-            "rpc": {
-                "host": "127.0.0.1",
-                "port": 8889
-            }
-        }
-    },
     "tools": [
         {
             "name": "python",
-            "type": "PythonTool",
-            "config": {
-                "version": "3.9"
-            }
+            "type": "tools.PythonTool"
         },
         {
             "name": "file",
-            "type": "FileTool"
-        },
+            "type": "tools.FileTool"
+        }
+    ],
+    "ais": [
         {
-            "name": "database",
-            "type": "http://127.0.0.1:8000/database",
-            "config": {
-                "engine": "sqlite",
-                "db_name": "my_db"
-            }
+            "name": "my_ai",
+            "model": "YOUR AI MODEL",
+            "type": "google OR openai OR anthropic",
+            "api_key": "YOUR API KEY"
         }
     ]
 }

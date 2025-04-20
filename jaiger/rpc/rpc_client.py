@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 
 import zmq
 from jaiger.configs import RpcConfig
-from jaiger.rpc.models import RpcRequest, RpcResponse
+from jaiger.models import Call, CallResult
 
 
 class RpcClient:
@@ -23,7 +23,7 @@ class RpcClient:
         _poller (Optional[zmq.Poller]): ZeroMQ poller for handling response waiting.
         _logger (logging.Logger): Logger instance for internal logging.
     """
-    
+
     def __init__(self, config: RpcConfig) -> None:
         """
         Initializes the RPC client with the specified configuration.
@@ -107,7 +107,7 @@ class RpcClient:
             TimeoutError: If the response is not received within the timeout period.
         """
 
-        request = RpcRequest(function=function, args=args, kwargs=kwargs)
+        request = Call(function=function, args=args, kwargs=kwargs)
         self._socket.send_multipart([server_id, request.model_dump()])
 
         return self._wait_for_response(server_id, function, args, kwargs, timeout)
@@ -134,7 +134,7 @@ class RpcClient:
             Future: A future representing the pending result of the RPC call.
         """
 
-        request = RpcRequest(function=function, args=args, kwargs=kwargs)
+        request = Call(function=function, args=args, kwargs=kwargs)
         self._socket.send_multipart([server_id, request.model_dump()])
 
         return self._pool.submit(
@@ -173,7 +173,7 @@ class RpcClient:
 
             self._logger.debug(f"Received from [{src}]: {content}")
 
-            response = RpcResponse.model_validate(content)
+            response = CallResult.model_validate(content)
 
             if response.error == "":
                 return response.result
