@@ -1,18 +1,31 @@
+import traceback
 from logging import getLogger
 from threading import Event, Thread
-import traceback
 from typing import Any, Callable, Dict, Optional
-from fastapi import FastAPI
+
 import uvicorn
+from fastapi import FastAPI
 
 from jaiger.configs import HttpConfig
 from jaiger.models import Call, CallResult
 
 
 class HttpServer:
+    """
+    A FastAPI-based HTTP server that exposes RPC endpoints and dispatches requests
+    to registered callback functions.
+    """
+
     def __init__(
         self, config: HttpConfig, callbacks: Dict[str, Callable[[Any], Any]]
     ) -> None:
+        """
+        Initializes the HTTP server with given configuration and callbacks.
+
+        :param config HttpConfig: Configuration for server setup.
+        :param callbacks Dict[str, Callable[[Any], Any]]: Registered RPC function handlers.
+        """
+
         self._host = config.host
         self._port = config.port
         self._timeout = config.timeout
@@ -24,6 +37,15 @@ class HttpServer:
         self._thread: Optional[Thread] = None
 
     def start(self) -> "HttpServer":
+        """
+        Starts the HTTP server in a background thread.
+
+        If an existing thread is already running, it will be stopped first.
+
+        :returns: The instance itself for chaining.
+        :rtype: HttpServer
+        """
+
         if self._thread is not None:
             self._logger.warning(
                 f"Terminating existing server thread ({self._thread.native_id}) ..."
@@ -31,7 +53,7 @@ class HttpServer:
             self.stop()
 
         app = FastAPI()
-        app.post('/call')(self.call)
+        app.post("/call")(self.call)
 
         self._server = uvicorn.Server(
             uvicorn.Config(app=app, host=self._host, port=self._port, workers=4)
@@ -52,6 +74,15 @@ class HttpServer:
         return self
 
     def stop(self) -> "HttpServer":
+        """
+        Stops the running HTTP server gracefully.
+
+        Waits for the server thread to terminate within the timeout period.
+
+        :returns: The instance itself for chaining.
+        :rtype: HttpServer
+        """
+
         if self._thread is not None:
             self._server.should_exit = True
 
@@ -69,18 +100,28 @@ class HttpServer:
             self._server = None
 
         return self
-    
+
     def call(self, call: Call):
+        """
+        Handles an incoming HTTP call.
+
+        Dispatches the request to the appropriate callback and returns the result.
+        If an error occurs during execution, a formatted traceback is returned.
+
+        :param call Call: The incoming HTTP call containing function name and arguments.
+
+        :returns: A CallResult object with either a result or an error.
+        :rtype: CallResult
+        """
+
         try:
             return CallResult(
                 result=self._callbacks[call.function](
-                    call.function,
-                    call.args,
-                    call.kwargs
+                    call.function, call.args, call.kwargs
                 )
             )
-        
+
         except Exception as e:
             return CallResult(
-                error=''.join(traceback.TracebackException.from_exception(e).format())
+                error="".join(traceback.TracebackException.from_exception(e).format())
             )

@@ -13,7 +13,7 @@
         {
             "name": "my_ai",
             "model": "YOUR AI MODEL",
-            "type": "google OR openai OR anthropic",
+            "type": "YOUR AI TYPE (e.g. google, openai, anthropic, etc.)",
             "api_key": "YOUR API KEY"
         }
     ]

@@ -1,6 +1,8 @@
 import traceback
 from typing import Any, Dict, List
+
 import httpx
+
 from jaiger.configs import HttpConfig
 from jaiger.models import Call, CallResult
 
@@ -19,17 +21,15 @@ class HttpClient:
     ) -> CallResult:
         try:
             response = httpx.post(
-                f'http://{self._host}:{self._port}/call',
+                f"http://{self._host}:{self._port}/call",
                 timeout=timeout,
-                json=Call(
-                    function=function,
-                    args=args,
-                    kwargs=kwargs
-                ).model_dump()
+                json=Call(function=function, args=args, kwargs=kwargs).model_dump(),
             )
 
             return CallResult.model_validate(response.json())
-        
+
         except Exception as e:
-            raise RuntimeError(f'Call failed:\n'
-                               f'{"".join(traceback.TracebackException.from_exception(e).format())}')
+            raise RuntimeError(
+                f"Call failed:\n"
+                f"{''.join(traceback.TracebackException.from_exception(e).format())}"
+            )

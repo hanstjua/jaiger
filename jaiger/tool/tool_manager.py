@@ -6,8 +6,8 @@ from typing import Any, Dict, List, Tuple
 from pydantic import BaseModel
 
 from jaiger.models import Call, CallResult
-from jaiger.tool import Tool, ToolSpec
-from jaiger.tool_process import ToolProcess
+from jaiger.tool.tool import Tool, ToolSpec
+from jaiger.tool.tool_process import ToolProcess
 
 
 class ToolInfo(BaseModel):
@@ -32,7 +32,10 @@ class ToolManager:
             return ToolInfo(name=name, specs=result.result)
 
         return [
-            tool_info for tool_info in self._pool.map(lambda kv: get_tool_info(kv[0], kv[1]), self._conns.items())
+            tool_info
+            for tool_info in self._pool.map(
+                lambda kv: get_tool_info(kv[0], kv[1]), self._conns.items()
+            )
         ]
 
     def start(

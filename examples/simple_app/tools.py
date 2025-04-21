@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Any
+
 from jaiger.tool import Tool
 
 
@@ -11,16 +12,17 @@ class PythonTool(Tool):
         This function executes arbitrary Python code.
 
         :param code str: The Python code to be executed.
-        :return: The output of the code execution.
+        :returns: The output of the code execution.
         :rtype: Any
         """
 
         return eval(code)
-    
+
+
 class FileTool(Tool):
     """This tool can be used to perform file-related operations."""
 
-    def create(self, filename: str, content: str = '', exist_ok: bool = True) -> str:
+    def create(self, filename: str, content: str = "", exist_ok: bool = True) -> str:
         """
         Create a file at the given absolute path, optionally writing content to it.
 
@@ -33,11 +35,11 @@ class FileTool(Tool):
 
         filepath = Path(filename).expanduser()
         filepath.touch(exist_ok=exist_ok)
-        if content != '':
-            filepath.write_text(content, encoding='utf-8')
+        if content != "":
+            filepath.write_text(content, encoding="utf-8")
 
         return filename
-    
+
     def modify(self, filename: str, content: str, append: bool = True) -> str:
         """
         Modify a file by appending or overwriting content.
@@ -45,7 +47,7 @@ class FileTool(Tool):
         :param filename str: The full path of the file to modify.
         :param content str: The content to write into the file.
         :param append bool: If True, content is appended to the file; if False, it overwrites the file. Defaults to True.
-        :return: The absolute path of the modified file.
+        :returns: The absolute path of the modified file.
         :rtype: str
         """
 
@@ -53,7 +55,7 @@ class FileTool(Tool):
         if not filepath.is_file():
             filepath.touch()
 
-        with open(str(filepath), 'a' if append else 'w') as f:
+        with open(str(filepath), "a" if append else "w") as f:
             f.write(content)
 
         return filename
@@ -63,7 +65,7 @@ class FileTool(Tool):
         Delete a file at the given absolute path.
 
         :param filename str: The full path of the file to delete.
-        :return: The absolute path of the deleted file.
+        :returns: The absolute path of the deleted file.
         :rtype: str
         """
 

@@ -1,4 +1,5 @@
 from google.genai import Client
+
 from jaiger.ai.model import Model
 from jaiger.configs import AiConfig
 from jaiger.models import PromptResult
@@ -16,10 +17,7 @@ class GoogleModel(Model):
 
     def prompt(self, text: str) -> PromptResult:
         response = self._chat.send_message(
-            text,
-            config={
-                'response_mime_type': 'application/json'
-            }
+            text, config={"response_mime_type": "application/json"}
         )
 
         return PromptResult.model_validate_json(response.text)

@@ -1,9 +1,10 @@
+import time
 from logging import getLogger
 from multiprocessing import Event, Process
-import time
 from typing import Optional
 
 import zmq
+
 from jaiger.configs import RpcConfig
 
 
@@ -14,10 +15,9 @@ def broker_task(endpoint: str, start_event: Event, stop_event: Event):
     This function is intended to be run as a background process. It listens for incoming multipart
     messages and forwards them to their destinations based on the envelope routing format.
 
-    Args:
-        endpoint (str): The ZeroMQ endpoint to bind to (e.g., "tcp://localhost:5555").
-        start_event (Event): A multiprocessing event used to signal that the broker has started.
-        stop_event (Event): A multiprocessing event used to signal the broker to stop running.
+    :param endpoint str: The ZeroMQ endpoint to bind to (e.g., "tcp://localhost:5555").
+    :param start_event Event: A multiprocessing event used to signal that the broker has started.
+    :param stop_event Event: A multiprocessing event used to signal the broker to stop running.
     """
 
     start_event.set()
@@ -52,20 +52,13 @@ class RpcBroker:
     This class launches the `broker_task` in a separate process using Python's multiprocessing
     facilities. It allows starting and stopping the broker that forwards messages between
     RPC clients and servers via ZeroMQ.
-
-    Attributes:
-        _endpoint (str): The ZeroMQ endpoint the broker binds to.
-        _timeout (int): Timeout in seconds for stopping the broker process gracefully.
-        _task (Optional[Process]): The background process running the broker task.
-        _stop_event (Optional[Event]): Event used to signal the broker process to stop.
     """
 
     def __init__(self, config: RpcConfig) -> None:
         """
         Initializes the RpcBroker with the given configuration.
 
-        Args:
-            config (RpcConfig): Configuration object containing the host, port, and timeout.
+        :param config RpcConfig: Configuration object containing the host, port, and timeout.
         """
 
         self._endpoint = f"tcp://{config.host}:{config.port}"
@@ -74,12 +67,15 @@ class RpcBroker:
         self._task: Optional[Process] = None
         self._stop_event: Optional[Event] = None
 
-    def start(self):
+    def start(self) -> 'RpcBroker':
         """
         Starts the RPC broker in a background process.
 
         If a broker process is already running, it is first terminated before starting a new one.
         Uses multiprocessing events to coordinate startup and shutdown signaling.
+
+        :returns: The instance itself for chaining.
+        :rtype: RpcBroker
         """
 
         logger = getLogger("jaiger")
@@ -102,14 +98,19 @@ class RpcBroker:
 
         logger.info(f"Broker process ({self._task.pid}) has started.")
 
-    def stop(self):
+        return self
+
+    def stop(self) -> 'RpcBroker':
         """
         Stops the RPC broker process gracefully.
 
         Waits for the background process to terminate within the configured timeout period.
         Logs whether the termination was successful or if the process remained alive.
+
+        :returns: The instance itself for chaining.
+        :rtype: RpcBroker
         """
-        
+
         if self._task is not None:
             self._stop_event.set()
 
@@ -123,3 +124,5 @@ class RpcBroker:
 
             self._task = None
             self._stop_event = None
+
+        return self

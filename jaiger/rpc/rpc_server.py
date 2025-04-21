@@ -1,11 +1,12 @@
-from concurrent.futures import Future, ThreadPoolExecutor
-from logging import getLogger
-from threading import Thread, Event
 import time
 import traceback
+from concurrent.futures import Future, ThreadPoolExecutor
+from logging import getLogger
+from threading import Event, Thread
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import zmq
+
 from jaiger.configs import RpcConfig
 from jaiger.models import Call, CallResult
 
@@ -23,12 +24,11 @@ def server_task(
     The server listens for incoming requests, dispatches them to the corresponding callback functions
     asynchronously using a thread pool, and sends back the results or error traces.
 
-    Args:
-        id (str): Unique identifier for the server (used as ZeroMQ identity).
-        callbacks (Dict[str, Callable[[Any], Any]]): Mapping of function names to their handler callables.
-        endpoint (str): ZeroMQ endpoint to connect to (e.g., "tcp://localhost:5555").
-        start_event (Event): Event used to signal that the server has started.
-        stop_event (Event): Event used to stop the server gracefully.
+    :param id str: Unique identifier for the server (used as ZeroMQ identity).
+    :param callbacks Dict[str, Callable[[Any], Any]]: Mapping of function names to their handler callables.
+    :param endpoint str: ZeroMQ endpoint to connect to (e.g., "tcp://localhost:5555").
+    :param start_event Event: Event used to signal that the server has started.
+    :param stop_event Event: Event used to stop the server gracefully.
     """
 
     start_event.set()
@@ -85,7 +85,9 @@ def server_task(
                 error = future.exception()
                 content = CallResult(
                     result=future.result() if error is None else None,
-                    error=''.join(traceback.TracebackException.from_exception(error).format())
+                    error="".join(
+                        traceback.TracebackException.from_exception(error).format()
+                    )
                     if error is not None
                     else "",
                 )
@@ -101,19 +103,18 @@ def server_task(
 class RpcServer:
     """
     An RPC server wrapper that manages the lifecycle of a server task handling RPC requests.
-
-    Attributes:
-        _id (str): Unique identifier of the server.
-        _callbacks (Dict[str, Callable[[Any], Any]]): Mapping of function names to handler functions.
-        _endpoint (str): ZeroMQ endpoint the server connects to.
-        _timeout (int): Timeout in seconds to wait when stopping the server.
-        _task (Optional[Thread]): Background thread running the server task.
-        _stop_event (Optional[Event]): Event used to signal the server thread to stop.
     """
 
     def __init__(
         self, id: str, config: RpcConfig, callbacks: Dict[str, Callable[[Any], Any]]
     ) -> None:
+        """Initialize the RpcServer.
+
+        :param id str: Unique identifier for the server.
+        :param config RpcConfig: Configuration object for the RPC server.
+        :param callbacks Dict[str, Callable[[Any], Any]]: Mapping of function names to their handler callables.
+        """
+
         self._id = id
         self._callbacks = callbacks
         self._endpoint = f"tcp://{config.host}:{config.port}"
@@ -129,8 +130,8 @@ class RpcServer:
         If a server thread is already running, it is first stopped before starting a new one.
         Uses event signaling to manage the server lifecycle.
 
-        Returns:
-            RpcServer: The instance itself, allowing method chaining.
+        :returns: The instance itself, allowing method chaining (RpcServer).
+        :rtype: RpcServer
         """
 
         logger = getLogger("jaiger")
@@ -163,10 +164,10 @@ class RpcServer:
         """
         Stops the RPC server by signaling the background thread and waiting for termination.
 
-        Returns:
-            RpcServer: The instance itself, allowing method chaining.
+        :returns: The instance itself, allowing method chaining (RpcServer).
+        :rtype: RpcServer
         """
-        
+
         if self._task is not None:
             self._stop_event.set()
 

@@ -1,16 +1,15 @@
-from abc import ABC, abstractmethod
 import json
+from abc import ABC, abstractmethod
 from typing import List
-from jaiger.models import Call, CallResult, ToolCall
 
-from jaiger.models import PromptResult
-from jaiger.tool_manager import ToolInfo
+from jaiger.models import CallResult, PromptResult, ToolCall
+from jaiger.tool.tool_manager import ToolInfo
 from jaiger.utils import get_type_schema
 
 
 class Model(ABC):
     def __init__(self) -> None:
-        preamble = f'''
+        preamble = f"""
         You are a helpful AI assistant who is capable of the following:
         * Responding to prompts ONLY with a JSON object with this type schema: {get_type_schema(PromptResult)}.
         * Breaking down user queries step-by-step and think carefully about how to respond.
@@ -27,13 +26,15 @@ class Model(ABC):
         * After performing tool call(s), you will expect the next immediate prompt to be the result(s) of the call(s).
           Each result will be presented as 'CallResult' object of the following schema: {get_type_schema(CallResult)}.
           Upon receiving the 'CallResult' objects you may then proceed to either make further tool call(s) (and expecting further 'CallResult' object(s)) or speak directly to the user.
-        '''
+        """
         self.prompt(preamble)
 
     @abstractmethod
     def prompt(self, text: str) -> PromptResult:
         pass
 
-    def register_tools(self, tools: List[ToolInfo]):
+    def register_tools(self, tools: List[ToolInfo]) -> 'Model':
         tools_schema = [info.model_dump() for info in tools]
-        self.prompt(f'These tools are now available:\n{json.dumps(tools_schema)}')
+        self.prompt(f"These tools are now available:\n{json.dumps(tools_schema)}")
+
+        return self

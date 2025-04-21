@@ -2,6 +2,7 @@ from typing import List
 
 from anthropic import Anthropic
 from anthropic.types.message import Message
+
 from jaiger.ai.model import Model
 from jaiger.configs import AiConfig
 from jaiger.models import PromptResult
@@ -18,12 +19,12 @@ class AnthropicModel(Model):
         super().__init__()
 
     def prompt(self, text: str) -> PromptResult:
-        self._messages_history += [{"role": "user", "content": text}]
+        self._messages_history.append({"role": "user", "content": text})
         response = self._client.messages.create(
-            model=self._model,
-            max_tokens=1024,
-            messages=self._messages_history
+            model=self._model, max_tokens=1024, messages=self._messages_history
+        )
+        self._messages_history.append(
+            {"role": response.role, "content": response.content[0].text}
         )
 
         return PromptResult.model_validate_json(response)
-    
