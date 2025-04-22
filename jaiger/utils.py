@@ -4,7 +4,7 @@ from typing import Any, Dict, Literal, Type, Union, get_origin
 
 from pydantic import BaseModel
 
-from jaiger.tool import Tool
+from jaiger.tool.tool import Tool
 
 
 def get_tool_class(type: str) -> Type[Tool]:

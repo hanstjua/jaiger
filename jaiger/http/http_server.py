@@ -59,9 +59,13 @@ class HttpServer:
             uvicorn.Config(app=app, host=self._host, port=self._port, workers=4)
         )
 
+        def run_server(e: Event):
+            e.set()
+            self._server.run()
+
         start_event = Event()
         self._thread = Thread(
-            target=lambda e: e.set() and self._server.run(),
+            target=run_server,
             args=(start_event,),
             daemon=True,
         )
@@ -117,7 +121,7 @@ class HttpServer:
         try:
             return CallResult(
                 result=self._callbacks[call.function](
-                    call.function, call.args, call.kwargs
+                    *call.args, **call.kwargs
                 )
             )
 

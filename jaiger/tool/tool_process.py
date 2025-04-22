@@ -6,7 +6,7 @@ from typing import Type
 
 from jaiger.configs import ToolConfig
 from jaiger.models import Call, CallResult
-from jaiger.tool import Tool
+from jaiger.tool.tool import Tool
 
 
 class ToolProcess(Process):
