@@ -33,7 +33,7 @@ class ToolConfig(BaseModel):
 class AiConfig(BaseModel):
     name: str
     model: str
-    type: Literal["openai", "google", "anthropic"]
+    type: Literal["openai", "google", "anthropic", "ollama"]
     api_key: str
 
 

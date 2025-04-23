@@ -1,16 +1,19 @@
-from asyncio import sleep
+import time
 from concurrent.futures import ThreadPoolExecutor
-from queue import Queue
+from queue import Empty, Queue
+
+import uvicorn
+from components import ReplyBubble, ReplyLoading, Root, UserBubble
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import BaseModel
-import uvicorn
-from components import ReplyBubble, ReplyLoading, Root, UserBubble
+
 from jaiger.main import Jaiger
 
 
 class PromptParams(BaseModel):
     text: str
+
 
 class WebUiApp:
     def __init__(self, config: str) -> None:
@@ -24,7 +27,7 @@ class WebUiApp:
         app.get("/quit")(self.quit)
 
         self._server = uvicorn.Server(
-            uvicorn.Config(app=app, host='127.0.0.1', port=7613, workers=2)
+            uvicorn.Config(app=app, host="127.0.0.1", port=7613, workers=2)
         )
 
         self._events_queue = Queue()
@@ -38,18 +41,20 @@ class WebUiApp:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._jaiger.stop()
-        self._pool.shutdowm()
+        self._pool.shutdown()
 
     def on_call(self, call):
         args = [repr(arg) for arg in call.args] + [
             f"{k}={repr(v)}" for k, v in call.kwargs.items()
         ]
-        print(
-            f"\n\033[93m> Calling {call.tool}.{call.function}({', '.join(args)})\033[0m"
-        )
+
+        message = f"Calling {call.tool}.{call.function}({', '.join(args)}) ..."
+
+        event = f'event: newCall\ndata: <p sse-swap="newCall" hx-swap="outerHTML">{message}</p>\n\n'
+        self._events_queue.put(event)
 
     def run(self):
-        print(f'Starting web ui at http://127.0.0.1:7613 ...')
+        print(f"Starting web ui at http://127.0.0.1:7613 ...")
         self._server.run()
 
     async def index(self):
@@ -58,7 +63,7 @@ class WebUiApp:
     async def prompt(self, params: PromptParams):
         def get_ai_answer():
             answer = self._jaiger.prompt("my_ai", params.text, on_call=self.on_call)
-            event = f'event: newResponse\ndata: {ReplyBubble(answer).render()}\n\n'
+            event = f"event: newResponse\ndata: {ReplyBubble(answer).render(0)}\n\n"
             self._events_queue.put(event)
 
         response = HTMLResponse(
@@ -69,32 +74,35 @@ class WebUiApp:
 
         return response
 
-    async def sse(self):
-        return StreamingResponse(self.events_generator(), media_type="text/event-stream")
+    def sse(self):
+        return StreamingResponse(
+            self.events_generator(), media_type="text/event-stream"
+        )
 
     async def new_chat(self):
         self._jaiger.stop()
 
         self._jaiger.start()
 
-        return HTMLResponse('')
+        return HTMLResponse("")
 
-    async def events_generator(self):
+    def events_generator(self):
         item = ""
         while True:
-            if self._events_queue.not_empty:
+            try:
                 item = self._events_queue.get()
-                if item == 'stop':
+                if item == "stop":
                     break
                 else:
                     yield item
-            else:
-                await sleep(0.01)
+            except Empty:
+                time.sleep(0.01)
 
     async def quit(self):
         self._server.should_exit = True
+        self._events_queue.put("stop")
 
-        return HTMLResponse('')
+        return HTMLResponse("")
 
 
 if __name__ == "__main__":

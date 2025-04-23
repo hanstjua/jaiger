@@ -1,0 +1,28 @@
+{
+    "settings": {
+        "server": {
+            "http": {
+                "host": "127.0.0.1",
+                "port": 7612
+            }
+        }
+    },
+    "tools": [
+        {
+            "name": "python",
+            "type": "tools.PythonTool"
+        },
+        {
+            "name": "file",
+            "type": "tools.FileTool"
+        }
+    ],
+    "ais": [
+        {
+            "name": "my_ai",
+            "model": "YOUR AI MODEL",
+            "type": "YOUR AI TYPE (e.g. google, openai, anthropic, etc.)",
+            "api_key": "YOUR API KEY"
+        }
+    ]
+}
