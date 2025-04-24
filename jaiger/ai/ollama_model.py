@@ -7,7 +7,7 @@ from jaiger.configs import AiConfig
 from jaiger.models import PromptResult
 
 
-class OpenAIModel(Model):
+class OllamaModel(Model):
     def __init__(self, config: AiConfig) -> None:
         self._model = config.model
 

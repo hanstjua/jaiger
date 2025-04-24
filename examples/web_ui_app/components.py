@@ -1,4 +1,6 @@
+from html import escape
 from chope import *
+from markdown import markdown
 
 # Bootstrap 5 CSS
 bootstrap_css = link(
@@ -31,7 +33,7 @@ alpine_js = script(
 
 # Google Material Symbols
 material_icons = link(
-    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,200,1,1&icon_names=send",
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,200,1,1&icon_names=send,refresh,mode_off_on",
     rel="stylesheet",
 )
 
@@ -58,31 +60,15 @@ navbar = nav(
         a(
             class_="navbar-brand",
             href="",
-        )["Jaiger"]
-    ]
-]
-
-user_bubble = div(class_="card text-bg-light m-2")[
-    p(class_="m-2")[
-        "Some quick example text to build on the card title and make up the bulk of the card's content."
-    ],
-]
-
-reply_bubble = div(class_="card m-2")[
-    div(class_="card-body")[
-        h6(
-            class_="card-subtitle mb-2 text-muted",
-        )["AI"],
-        p(class_="card-text")[
-            "Some quick example text to build on the card title and make up the bulk of the card's content."
-        ],
-    ]
-]
-
-reply_loading = div(class_="card m-2")[
-    div(class_="card-footer")[
-        div(class_="spinner-grow spinner-grow-sm text-light", role="status")[
-            span(class_="visually-hidden")["Loading ..."]
+        )["Jaiger"],
+        form(class_="d-flex mt-1")[
+            button(class_="btn btn-info btn-sm")[
+                span(class_="material-symbols-rounded")["refresh"],
+            ],
+            button(class_="btn btn-danger btn-sm ms-2", hx_get="/quit", hx_target="body")[
+                span(class_="material-symbols-rounded")["mode_off_on"],
+                "Shutdown"
+            ]
         ]
     ]
 ]
@@ -91,19 +77,27 @@ reply_loading = div(class_="card m-2")[
 class UserBubble:
     def __new__(cls, content: str) -> Element:
         return div(hx_swap_oob="beforebegin:#bubbles-end")[
-            div(class_="container d-flex justify-content-end me-2")[
-                div(class_="card text-bg-light m-2")[p(class_="m-2")[content]]
+            div(class_="container")[
+                div(class_="d-flex justify-content-end me-2")[
+                    div(class_="card text-bg-light m-2")[p(class_="m-2")[content]]
+                ]
             ]
         ]
 
 
 class ReplyBubble:
     def __new__(cls, content: str) -> Element:
-        return div(class_="container d-flex justify-content-start ms-2")[
-            div(class_="card m-2")[
-                div(class_="card-body")[
-                    h6(class_="card-subtitle mb-2 text-muted")["AI"],
-                    p(class_="card-text")[content],
+        print
+        print(escape(content))
+        return div(class_="container")[
+            div(class_="d-flex justify-content-start ms-2")[
+                div(class_="card m-2")[
+                    div(class_="card-body")[
+                        h6(class_="card-subtitle mb-2 text-muted")["AI"],
+                        p(class_="card-text")[
+                            markdown(content, extensions=['fenced_code', 'tables'])
+                        ],
+                    ]
                 ]
             ]
         ]
@@ -113,16 +107,18 @@ class ReplyLoading:
     def __new__(cls):
         return div(hx_swap_oob="beforebegin:#bubbles-end")[
             div(sse_swap="newResponse", hx_swap="outerHTML")[
-                div(id="spinner", class_="container d-flex justify-content-start")[
-                    div(class_="card m-2")[
-                        div(class_="card-footer")[
-                            div(
-                                class_="spinner-grow spinner-grow-sm text-light",
-                                role="status",
-                            )[span(class_="visually-hidden")["Loading ..."],],
-                            div(class_="mt-1")[
-                                p(sse_swap="newCall", hx_swap="outerHTML")
-                            ],
+                div(class_="container")[
+                    div(id="spinner", class_="d-flex justify-content-start")[
+                        div(class_="card m-2")[
+                            div(class_="card-footer")[
+                                div(
+                                    class_="spinner-grow spinner-grow-sm text-light",
+                                    role="status",
+                                )[span(class_="visually-hidden")["Loading ..."],],
+                                div(class_="mt-1")[
+                                    p(sse_swap="newCall", hx_swap="outerHTML")
+                                ],
+                            ]
                         ]
                     ]
                 ]
@@ -184,7 +180,9 @@ class Root:
                                 hx_post="/prompt",
                                 hx_include="[name='text']",
                                 hx_ext="json-enc",
-                            )[span(class_="material-symbols-rounded")["send"]]
+                            )[
+                                span(class_="material-symbols-rounded")["send"]
+                            ]
                         ],
                     ],
                 ]

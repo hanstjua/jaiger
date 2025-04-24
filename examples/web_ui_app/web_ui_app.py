@@ -102,7 +102,7 @@ class WebUiApp:
         self._server.should_exit = True
         self._events_queue.put("stop")
 
-        return HTMLResponse("")
+        return HTMLResponse("<h1>Bye bye</h1>")
 
 
 if __name__ == "__main__":
