@@ -111,6 +111,15 @@ class Jaiger:
 
         self._ai_manager.register_tools(self._tool_manager.tools())
 
+        if self._http_server:
+            self._http_server.start()
+
+        if self._rpc_broker:
+            self._rpc_broker.start()
+
+        if self._rpc_server:
+            self._rpc_server.start()
+
         return self
 
     def stop(self) -> "Jaiger":
@@ -126,6 +135,15 @@ class Jaiger:
 
         for ai in self._ai_manager.ais():
             self._ai_manager.remove_ai(ai)
+
+        if self._http_server:
+            self._http_server.stop()
+
+        if self._rpc_broker:
+            self._rpc_broker.stop()
+
+        if self._rpc_server:
+            self._rpc_server.stop()
 
         return self
 

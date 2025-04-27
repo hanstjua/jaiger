@@ -6,6 +6,7 @@ from typing import Dict, List
 from jaiger.ai.anthropic_model import AnthropicModel
 from jaiger.ai.google_model import GoogleModel
 from jaiger.ai.model import Model
+from jaiger.ai.ollama_model import OllamaModel
 from jaiger.ai.openai_model import OpenAIModel
 from jaiger.configs import AiConfig
 from jaiger.models import PromptResult
@@ -33,6 +34,8 @@ class AiManager:
             model = AnthropicModel(config)
         elif config.type == "openai":
             model = OpenAIModel(config)
+        elif config.type == "ollama":
+            model = OllamaModel(config)
         else:
             raise ValueError(f"Unsupported AI type {config.type}.")
 

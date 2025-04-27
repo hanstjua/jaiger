@@ -1,12 +1,16 @@
 import time
 from concurrent.futures import ThreadPoolExecutor
 from queue import Empty, Queue
+import traceback
+from typing import Callable
 
 import uvicorn
 from components import ReplyBubble, ReplyLoading, Root, UserBubble
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from pydantic import BaseModel
+from jaiger.configs import HttpConfig
+from jaiger.http.http_client import HttpClient
 
 from jaiger.main import Jaiger
 
@@ -14,55 +18,37 @@ from jaiger.main import Jaiger
 class PromptParams(BaseModel):
     text: str
 
+class App(FastAPI):
+    def __init__(self, http_config: HttpConfig, on_quit: Callable[[], None], *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-class WebUiApp:
-    def __init__(self, config: str) -> None:
-        self._jaiger = Jaiger(config)
-
-        app = FastAPI()
-        app.get("/")(self.index)
-        app.post("/prompt")(self.prompt)
-        app.post("/new-chat")(self.new_chat)
-        app.get("/sse")(self.sse)
-        app.get("/quit")(self.quit)
-
-        self._server = uvicorn.Server(
-            uvicorn.Config(app=app, host="127.0.0.1", port=7613, workers=2)
-        )
+        self.get("/")(self.index)
+        self.post("/prompt")(self.prompt)
+        self.get("/reset")(self.reset)
+        self.get("/sse")(self.sse)
+        self.get("/quit")(self.quit)
 
         self._events_queue = Queue()
 
         self._pool = ThreadPoolExecutor()
 
-    def __enter__(self):
-        self._jaiger.start()
+        self._jaiger_client = HttpClient(http_config)
 
-        return self
+        self._on_quit = on_quit
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._jaiger.stop()
-        self._pool.shutdown()
-
-    def on_call(self, call):
-        args = [repr(arg) for arg in call.args] + [
-            f"{k}={repr(v)}" for k, v in call.kwargs.items()
-        ]
-
-        message = f"Calling {call.tool}.{call.function}({', '.join(args)}) ..."
-
-        event = f'event: newCall\ndata: <p sse-swap="newCall" hx-swap="outerHTML">{message}</p>\n\n'
-        self._events_queue.put(event)
-
-    def run(self):
-        print(f"Starting web ui at http://127.0.0.1:7613 ...")
-        self._server.run()
-
-    async def index(self):
+    def index(self):
         return HTMLResponse(Root().render(0))
 
-    async def prompt(self, params: PromptParams):
+    def prompt(self, params: PromptParams):
         def get_ai_answer():
-            answer = self._jaiger.prompt("my_ai", params.text, on_call=self.on_call)
+            try:
+                result = self._jaiger_client.call("prompt", ["my_ai", params.text])
+                if result.error:
+                    raise RuntimeError(f'Error while prompting:\n{result.error}')
+                answer = result.result
+            except Exception as e:
+                answer = ''.join(traceback.TracebackException.from_exception(e).format())
+
             event = f"event: newResponse\ndata: {ReplyBubble(answer).render(0)}\n\n"
             self._events_queue.put(event)
 
@@ -79,12 +65,15 @@ class WebUiApp:
             self.events_generator(), media_type="text/event-stream"
         )
 
-    async def new_chat(self):
-        self._jaiger.stop()
+    def reset(self):
+        try:
+            self._jaiger_client.call("stop")
+            self._jaiger_client.call("start")
 
-        self._jaiger.start()
+            return RedirectResponse("/")
 
-        return HTMLResponse("")
+        except Exception as e:
+            return HTMLResponse(f"Failed to reset:\n{''.join(traceback.TracebackException.from_exception(e).format())}")
 
     def events_generator(self):
         item = ""
@@ -98,11 +87,60 @@ class WebUiApp:
             except Empty:
                 time.sleep(0.01)
 
-    async def quit(self):
-        self._server.should_exit = True
+    def quit(self):
         self._events_queue.put("stop")
+        self._pool.shutdown(wait=False)
+
+        self._on_quit()
 
         return HTMLResponse("<h1>Bye bye</h1>")
+    
+    def on_call(self, call):
+        args = [repr(arg) for arg in call.args] + [
+            f"{k}={repr(v)}" for k, v in call.kwargs.items()
+        ]
+
+        message = f"Calling {call.tool}.{call.function}({', '.join(args)}) ..."
+
+        event = f'event: newCall\ndata: <p sse-swap="newCall" hx-swap="outerHTML">{message}</p>\n\n'
+        self._events_queue.put(event)
+
+
+class WebUiApp(Jaiger):
+    def __init__(self, config: str) -> None:
+        super().__init__(config)
+
+        self._app = App(self.config().settings.server.http, self._stop_server, workers=2)
+
+        self._server = uvicorn.Server(
+            uvicorn.Config(app=self._app, host="127.0.0.1", port=7613, workers=2)
+        )
+
+    def __enter__(self):
+        self.start()
+
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stop()
+
+    def run(self):
+        print(f"Starting web ui at http://127.0.0.1:7613 ...")
+        self._server.run()
+
+    def prompt(
+            self,
+            name: str,
+            text: str
+        ) -> str:
+        return super().prompt(
+            name,
+            text,
+            on_call=self._app.on_call
+        )
+    
+    def _stop_server(self):
+        self._server.should_exit = True
 
 
 if __name__ == "__main__":

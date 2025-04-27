@@ -33,7 +33,7 @@ alpine_js = script(
 
 # Google Material Symbols
 material_icons = link(
-    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,200,1,1&icon_names=send,refresh,mode_off_on",
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,200,1,1&icon_names=mode_off_on,refresh,send",
     rel="stylesheet",
 )
 
@@ -62,12 +62,11 @@ navbar = nav(
             href="",
         )["Jaiger"],
         form(class_="d-flex mt-1")[
-            button(class_="btn btn-info btn-sm")[
+            a(class_="btn btn-info btn-sm", href="/reset")[
                 span(class_="material-symbols-rounded")["refresh"],
             ],
             button(class_="btn btn-danger btn-sm ms-2", hx_get="/quit", hx_target="body")[
-                span(class_="material-symbols-rounded")["mode_off_on"],
-                "Shutdown"
+                span(class_="material-symbols-rounded")["mode_off_on"]
             ]
         ]
     ]
@@ -78,8 +77,10 @@ class UserBubble:
     def __new__(cls, content: str) -> Element:
         return div(hx_swap_oob="beforebegin:#bubbles-end")[
             div(class_="container")[
-                div(class_="d-flex justify-content-end me-2")[
-                    div(class_="card text-bg-light m-2")[p(class_="m-2")[content]]
+                div(class_="d-flex justify-content-end ms-2")[
+                    div(class_="card text-bg-light m-2")[p(class_="m-2")[
+                        escape(content)
+                    ]]
                 ]
             ]
         ]
