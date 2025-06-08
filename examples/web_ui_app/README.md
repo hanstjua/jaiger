@@ -1,4 +1,4 @@
-# Simple App
+# Web UI App
 
 ## Running
 

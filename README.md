@@ -42,6 +42,12 @@ pip install -e .
 
 ---
 
+## Examples
+
+You can find examples of how Jaiger can be used to develop AI-powered applications [here](https://github.com/hanstjua/jaiger/tree/main/examples).
+
+---
+
 ## Motivation
 
 Jaiger is my attempt to gain better understanding of how the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) could be implemented. While there are significant differences between the actual implementation of Jaiger and the MCP, both makes it easier to (1) develop LLM-compatible tools and (2) utilize said tools to build AI-powered applications.
