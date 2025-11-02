@@ -37,7 +37,7 @@ class App(FastAPI):
         self._on_quit = on_quit
 
     def index(self):
-        return HTMLResponse(Root().render(0))
+        return HTMLResponse(Root().render(indent=0))
 
     def prompt(self, params: PromptParams):
         def get_ai_answer():
@@ -49,11 +49,13 @@ class App(FastAPI):
             except Exception as e:
                 answer = ''.join(traceback.TracebackException.from_exception(e).format())
 
-            event = f"event: newResponse\ndata: {ReplyBubble(answer).render(0)}\n\n"
+            bubble = ReplyBubble(answer).render(0)
+
+            event = f"event: newResponse\ndata: {bubble}\n\n"
             self._events_queue.put(event)
 
         response = HTMLResponse(
-            UserBubble(params.text).render() + ReplyLoading().render()
+            UserBubble(params.text).render(indent=0) + ReplyLoading().render(indent=0)
         )
 
         self._pool.submit(get_ai_answer)
@@ -93,7 +95,7 @@ class App(FastAPI):
 
         self._on_quit()
 
-        return HTMLResponse("<h1>Bye bye</h1>")
+        return HTMLResponse('<h1 class="m-2">Bye bye</h1>')
     
     def on_call(self, call):
         args = [repr(arg) for arg in call.args] + [

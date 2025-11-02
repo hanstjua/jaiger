@@ -55,16 +55,14 @@ htmx_json_enc_js = script(src="https://unpkg.com/htmx.org@1.9.12/dist/ext/json-e
 navbar = nav(
     class_="navbar navbar-expand-lg bg-primary",
     data_bs_theme="dark",
+    style="position: sticky; top: 0; z-index: 1000"
 )[
     div(class_="container-fluid")[
         a(
             class_="navbar-brand",
-            href="",
+            href=""
         )["Jaiger"],
         form(class_="d-flex mt-1")[
-            a(class_="btn btn-info btn-sm", href="/reset")[
-                span(class_="material-symbols-rounded")["refresh"],
-            ],
             button(class_="btn btn-danger btn-sm ms-2", hx_get="/quit", hx_target="body")[
                 span(class_="material-symbols-rounded")["mode_off_on"]
             ]
@@ -88,15 +86,18 @@ class UserBubble:
 
 class ReplyBubble:
     def __new__(cls, content: str) -> Element:
-        print
-        print(escape(content))
+        converted = markdown(
+            content,
+            extensions=['fenced_code', 'tables', 'sane_lists'],
+            output_format='html'
+        ).replace('\n', '')
         return div(class_="container")[
             div(class_="d-flex justify-content-start ms-2")[
                 div(class_="card m-2")[
                     div(class_="card-body")[
                         h6(class_="card-subtitle mb-2 text-muted")["AI"],
                         p(class_="card-text")[
-                            markdown(content, extensions=['fenced_code', 'tables'])
+                            converted
                         ],
                     ]
                 ]
