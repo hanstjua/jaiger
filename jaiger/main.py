@@ -73,15 +73,18 @@ class Jaiger:
 
         self._rpc_broker: Optional[RpcBroker] = None
         self._rpc_server: Optional[RpcServer] = None
-        if self._config.settings.server.rpc is not None:
-            self._rpc_broker = RpcBroker(self._config.settings.server.rpc)
-            self._rpc_server = RpcServer(
-                "jaiger", self._config.settings.server.rpc, callbacks
-            )
-
         self._http_server: Optional[HttpServer] = None
-        if self._config.settings.server.http:
-            self._http_server = HttpServer(self._config.settings.server.http, callbacks)
+
+        if self._config.settings is not None and self._config.settings.server is not None:
+            if self._config.settings.server.rpc is not None:
+                self._rpc_broker = RpcBroker(self._config.settings.server.rpc)
+                self._rpc_server = RpcServer(
+                    "jaiger", self._config.settings.server.rpc, callbacks
+                )
+
+            
+            if self._config.settings.server.http:
+                self._http_server = HttpServer(self._config.settings.server.http, callbacks)
 
         self._ai_manager = AiManager()
         self._tool_manager = ToolManager()
